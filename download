@@ -1,0 +1,10 @@
+# API-nycklar — lägg ALDRIG upp dessa på GitHub
+js/config.js
+.env
+.env.local
+*.env
+
+# Systemberoenden
+.DS_Store
+Thumbs.db
+node_modules/

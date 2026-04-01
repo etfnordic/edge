@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EdgeTrader — Väderdriven råvaruhandel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="boot-screen">
+    <div id="boot-text"></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <header>
+      <div class="header-left">
+        <span class="logo">EDGE<span class="logo-accent">TRADER</span></span>
+        <span class="version">v1.0 · BETA</span>
+      </div>
+      <div class="header-center">
+        <div class="clock" id="clock"></div>
+        <div class="market-status" id="market-status">
+          <span class="status-dot"></span>
+          <span id="market-label">KONTROLLERAR MARKNAD...</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="hdr-btn" onclick="App.refreshAll()">↻ UPPDATERA</button>
+        <div class="signal-count"><span id="active-signals">0</span> AKTIVA SIGNALER</div>
+      </div>
+    </header>
+
+    <nav>
+      <button class="nav-btn active" data-tab="dashboard" onclick="App.switchTab('dashboard')">DASHBOARD</button>
+      <button class="nav-btn" data-tab="signals" onclick="App.switchTab('signals')">SIGNALER</button>
+      <button class="nav-btn" data-tab="weather" onclick="App.switchTab('weather')">VÄDER & RÅVAROR</button>
+      <button class="nav-btn" data-tab="backtest" onclick="App.switchTab('backtest')">BACKTEST</button>
+      <button class="nav-btn" data-tab="portfolio" onclick="App.switchTab('portfolio')">PORTFÖLJ</button>
+    </nav>
+
+    <main>
+      <!-- DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab active">
+        <div class="grid-4">
+          <div class="metric-card">
+            <div class="metric-label">EDGE-TRÄFFSÄKERHET</div>
+            <div class="metric-value accent" id="kpi-accuracy">—</div>
+            <div class="metric-sub">senaste 90 dagar</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">AKTIVA SIGNALER</div>
+            <div class="metric-value" id="kpi-signals">—</div>
+            <div class="metric-sub">köp / sälj / neutral</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">VÄDER-ANOMALIER</div>
+            <div class="metric-value warn" id="kpi-anomalies">—</div>
+            <div class="metric-sub">EFI-index aktiva</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">SENAST UPPDATERAD</div>
+            <div class="metric-value small" id="kpi-updated">—</div>
+            <div class="metric-sub">live data</div>
+          </div>
+        </div>
+
+        <div class="grid-2-1">
+          <div class="panel">
+            <div class="panel-header">TOPP-SIGNALER JUST NU
+              <span class="panel-badge" id="signal-badge">LIVE</span>
+            </div>
+            <div id="top-signals-list"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">VÄDER-ANOMALIER</div>
+            <div id="weather-anomalies-list"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-header">EDGE-KORRELATIONSMATRIS
+            <span class="panel-sub">väder → råvara · historisk r²</span>
+          </div>
+          <div id="correlation-matrix"></div>
+        </div>
+      </section>
+
+      <!-- SIGNALS TAB -->
+      <section id="tab-signals" class="tab">
+        <div class="panel">
+          <div class="panel-header">ALLA AKTIVA EDGE-SIGNALER
+            <div class="filter-row">
+              <button class="filter-btn active" onclick="App.filterSignals('all')">ALLA</button>
+              <button class="filter-btn" onclick="App.filterSignals('buy')">KÖP</button>
+              <button class="filter-btn" onclick="App.filterSignals('sell')">SÄLJ</button>
+              <button class="filter-btn" onclick="App.filterSignals('weather')">VÄDER</button>
+              <button class="filter-btn" onclick="App.filterSignals('seasonal')">SÄSONG</button>
+            </div>
+          </div>
+          <div id="all-signals-list"></div>
+        </div>
+      </section>
+
+      <!-- WEATHER TAB -->
+      <section id="tab-weather" class="tab">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">VÄDERREGIONER & RÅVAROR</div>
+            <div class="region-selector">
+              <button class="region-btn active" onclick="App.selectRegion('cornbelt')">CORN BELT</button>
+              <button class="region-btn" onclick="App.selectRegion('wheat')">VETE-PLAINS</button>
+              <button class="region-btn" onclick="App.selectRegion('brazil')">BRASILIEN</button>
+              <button class="region-btn" onclick="App.selectRegion('nordic')">NORDEN</button>
+              <button class="region-btn" onclick="App.selectRegion('texas')">TEXAS/GULF</button>
+            </div>
+            <div id="weather-detail"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header">LIVE VÄDERDATA
+              <span class="panel-sub" id="weather-coords"></span>
+            </div>
+            <div id="weather-live-data"></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-header">14-DAGARS PROGNOS VS HISTORISKT SNITT
+            <span class="panel-sub">temperaturavvikelse °C · z-score anomali</span>
+          </div>
+          <div class="chart-wrap" style="height:220px">
+            <canvas id="weather-forecast-chart"></canvas>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-header">ENSO-INDEX (EL NIÑO / LA NIÑA)
+            <span class="panel-sub">källa: NOAA · påverkan på råvaror</span>
+          </div>
+          <div id="enso-panel"></div>
+        </div>
+      </section>
+
+      <!-- BACKTEST TAB -->
+      <section id="tab-backtest" class="tab">
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-header">BACKTEST-KONFIGURATION</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>EDGE-STRATEGI</label>
+                <select id="bt-edge">
+                  <option value="cornbelt_drought">Corn Belt torka → majs</option>
+                  <option value="polar_vortex">Polar Vortex → Natural Gas</option>
+                  <option value="enso_coffee">ENSO La Niña → kaffe</option>
+                  <option value="ukraine_wheat">Ukraina torka → vete</option>
+                  <option value="nordic_hydro">Nordisk hydro → el-pris</option>
+                  <option value="gold_silver_ratio">Guld/silver-ratio mean reversion</option>
+                  <option value="congressional">Kongress-disclosure lag</option>
+                  <option value="pre_fomc">Pre-FOMC drift S&P500</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>INSTRUMENT (AVANZA)</label>
+                <select id="bt-instrument">
+                  <option value="BULL OMXS30 X5">BULL OMXS30 X5</option>
+                  <option value="BEAR OMXS30 X5">BEAR OMXS30 X5</option>
+                  <option value="XACT BULL">XACT BULL</option>
+                  <option value="Corn futures (ZC)">Corn futures (ZC)</option>
+                  <option value="Wheat futures (ZW)">Wheat futures (ZW)</option>
+                  <option value="Natural Gas (UNG)">Natural Gas (UNG)</option>
+                  <option value="Gold (GLD)">Gold (GLD)</option>
+                  <option value="Silver (SLV)">Silver (SLV)</option>
+                  <option value="Coffee (KC)">Coffee (KC)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>PERIOD</label>
+                <select id="bt-period">
+                  <option value="3">3 år (2022–2024)</option>
+                  <option value="5" selected>5 år (2020–2024)</option>
+                  <option value="10">10 år (2015–2024)</option>
+                  <option value="20">20 år (2005–2024)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>HÄVSTÅNG</label>
+                <select id="bt-leverage">
+                  <option value="1">1x (ingen)</option>
+                  <option value="2">2x</option>
+                  <option value="3">3x</option>
+                  <option value="5" selected>5x (BULL/BEAR)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>STARTKAPITAL (SEK)</label>
+                <input type="number" id="bt-capital" value="100000" step="10000" />
+              </div>
+              <div class="form-group">
+                <label>STOP-LOSS %</label>
+                <input type="number" id="bt-stop" value="8" step="0.5" />
+              </div>
+              <div class="form-group">
+                <label>POSITION SIZING</label>
+                <select id="bt-sizing">
+                  <option value="kelly">Kelly-kriteriet</option>
+                  <option value="fixed">Fast 10% per trade</option>
+                  <option value="full">Full kapital</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>ANOMALI-TRÖSKEL (z-score)</label>
+                <input type="number" id="bt-threshold" value="1.5" step="0.1" min="0.5" max="3" />
+              </div>
+            </div>
+            <button class="run-btn" onclick="Backtest.run()">
+              <span>▶ KÖR BACKTEST</span>
+            </button>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">RESULTAT</div>
+            <div id="bt-results-summary">
+              <div class="bt-placeholder">Konfigurera och kör ett backtest för att se resultat.</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="bt-charts-section" style="display:none">
+          <div class="panel" style="margin-top:12px">
+            <div class="panel-header">KAPITALUTVECKLING
+              <span class="panel-sub" id="bt-chart-label"></span>
+            </div>
+            <div class="chart-wrap" style="height:260px">
+              <canvas id="equity-chart"></canvas>
+            </div>
+          </div>
+          <div class="grid-2" style="margin-top:12px">
+            <div class="panel">
+              <div class="panel-header">MÅNADSVIS AVKASTNING</div>
+              <div class="chart-wrap" style="height:180px">
+                <canvas id="monthly-chart"></canvas>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-header">DRAWDOWN-KURVA</div>
+              <div class="chart-wrap" style="height:180px">
+                <canvas id="drawdown-chart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:12px">
+            <div class="panel-header">TRADE-HISTORIK</div>
+            <div id="trade-log" style="overflow-x:auto"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PORTFOLIO TAB -->
+      <section id="tab-portfolio" class="tab">
+        <div class="grid-4">
+          <div class="metric-card">
+            <div class="metric-label">PORTFÖLJVÄRDE</div>
+            <div class="metric-value accent" id="port-value">100 000 kr</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">DAGLIG P&amp;L</div>
+            <div class="metric-value" id="port-daily">+0 kr</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">YTD AVKASTNING</div>
+            <div class="metric-value" id="port-ytd">+0%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">SHARPE-KVOT</div>
+            <div class="metric-value" id="port-sharpe">—</div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:12px">
+          <div class="panel-header">ÖPPNA POSITIONER</div>
+          <div id="positions-table"></div>
+        </div>
+        <div class="grid-2" style="margin-top:12px">
+          <div class="panel">
+            <div class="panel-header">LÄGG TILL POSITION</div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>INSTRUMENT</label>
+                <input type="text" id="pos-instrument" placeholder="T.ex. BULL OMXS30 X5" />
+              </div>
+              <div class="form-group">
+                <label>KÖPKURS</label>
+                <input type="number" id="pos-price" placeholder="0.00" step="0.01" />
+              </div>
+              <div class="form-group">
+                <label>ANTAL</label>
+                <input type="number" id="pos-qty" placeholder="0" />
+              </div>
+              <div class="form-group">
+                <label>EDGE-TYP</label>
+                <select id="pos-edge">
+                  <option>Corn Belt torka</option>
+                  <option>Polar Vortex</option>
+                  <option>ENSO</option>
+                  <option>Guld/silver-ratio</option>
+                  <option>Pre-FOMC</option>
+                  <option>Manuell</option>
+                </select>
+              </div>
+            </div>
+            <button class="run-btn" onclick="Portfolio.addPosition()">+ LÄGG TILL</button>
+          </div>
+          <div class="panel">
+            <div class="panel-header">RISKEXPONERING</div>
+            <div class="chart-wrap" style="height:200px">
+              <canvas id="risk-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>EDGE TRADER · Ej investeringsrådgivning · Handla med eget ansvar</span>
+      <span id="data-sources">Data: Open-Meteo · Alpha Vantage · Yahoo Finance · Finnhub</span>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="edges.js"></script>
+  <script src="backtest.js"></script>
+  <script src="charts.js"></script>
+  <script src="portfolio.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
