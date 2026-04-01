@@ -14,6 +14,37 @@ const App = {
     App._startClock();
     App._startAutoRefresh();
     Portfolio.init();
+    App._startWebSocketTicker();
+  },
+
+  // ── WEBSOCKET LIVE-TICKER ────────────────────────────────────
+  _livePrices: {},
+  _startWebSocketTicker() {
+    API.connectWebSocket((trade) => {
+      App._livePrices[trade.symbol] = trade.price;
+      App._updateTickerDisplay(trade.symbol, trade.price);
+    });
+  },
+
+  _updateTickerDisplay(symbol, price) {
+    const label = {
+      'OANDA:XAU_USD': 'GULD', 'OANDA:XAG_USD': 'SILVER',
+      'OANDA:NATGAS_USD': 'NATGAS', 'OANDA:CORN_USD': 'MAJS',
+      'OANDA:WHEAT_USD': 'VETE', 'BINANCE:BTCUSDT': 'BTC'
+    }[symbol] || symbol;
+    const el = document.getElementById('live-ticker');
+    if (!el) return;
+    let span = el.querySelector(`[data-sym="${symbol}"]`);
+    if (!span) {
+      span = document.createElement('span');
+      span.dataset.sym = symbol;
+      el.appendChild(span);
+    }
+    span.textContent = `${label} ${price.toFixed(2)}`;
+    span.style.cssText = 'margin-right:16px; color:var(--green); font-size:11px; letter-spacing:0.05em;';
+    // Blink-effekt vid uppdatering
+    span.style.opacity = '0.5';
+    setTimeout(() => { span.style.opacity = '1'; }, 150);
   },
 
   // ── BOOT-SEKVENS ────────────────────────────────────────────

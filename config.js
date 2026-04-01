@@ -1,22 +1,35 @@
 // ============================================================
 //  EdgeTrader — Konfiguration
-//  Kopiera .env.example till .env och fyll i dina API-nycklar
-//  LÄGG TILL config.js i .gitignore om du lägger till riktiga nycklar
+//
+//  STEG FÖR LIVE-DATA:
+//  1. Finnhub (gratis):       https://finnhub.io/register
+//  2. Alpha Vantage (gratis): https://www.alphavantage.co/support/#api-key
+//  3. Klistra in nycklarna nedan och sätt USE_DEMO_DATA: false
+//  4. config.js ligger redan i .gitignore — committa ALDRIG riktiga nycklar
+//
+//  Open-Meteo (väderdata) kräver INGEN nyckel — fungerar direkt.
 // ============================================================
 
 const CONFIG = {
-  // Gratis API-nycklar — registrera på respektive site
-  ALPHA_VANTAGE_KEY: 'demo',      // https://www.alphavantage.co/support/#api-key
-  FINNHUB_KEY: 'demo',            // https://finnhub.io/register
+  // ── SÄTT DINA NYCKLAR HÄR ──────────────────────────────────
+  FINNHUB_KEY: 'DIN_NYCKEL_HÄR',        // finnhub.io/register  → gratis, 60 req/min
+  ALPHA_VANTAGE_KEY: 'DIN_NYCKEL_HÄR',  // alphavantage.co      → gratis, 25 req/dag
+  // Open-Meteo kräver ingen nyckel ─ fungerar utan konfiguration
 
-  // Open-Meteo: INGEN nyckel behövs, helt gratis
-  // Yahoo Finance: INGEN nyckel behövs (via CORS-proxy)
+  // ── WEBSOCKET — realtids-tick via Finnhub ───────────────────
+  // Gratis plan: max 50 symboler. Format: OANDA:XAU_USD, BINANCE:BTCUSDT, AAPL
+  WS_SYMBOLS: [
+    'OANDA:XAU_USD',    // Guld
+    'OANDA:XAG_USD',    // Silver
+    'OANDA:NATGAS_USD', // Natural Gas
+    'OANDA:CORN_USD',   // Majs
+    'OANDA:WHEAT_USD',  // Vete
+  ],
 
-  // CORS-proxy för Yahoo Finance (gratis public proxy)
-  YAHOO_PROXY: 'https://query1.finance.yahoo.com/v8/finance/chart/',
-
-  // Simulera data om live APIs är otillgängliga (sätt till false för riktig data)
-  USE_DEMO_DATA: true,
+  // ── DEMO-LÄGE ───────────────────────────────────────────────
+  // true  = simulerad data (fungerar utan nycklar, bra för test)
+  // false = live-data (kräver nycklar ovan)
+  USE_DEMO_DATA: false,
 
   // Uppdateringsintervall (millisekunder)
   REFRESH_INTERVAL: 300000, // 5 minuter
