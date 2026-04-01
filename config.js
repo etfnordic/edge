@@ -12,8 +12,8 @@
 
 const CONFIG = {
   // ── SÄTT DINA NYCKLAR HÄR ──────────────────────────────────
-  FINNHUB_KEY: 'DIN_NYCKEL_HÄR',        // finnhub.io/register  → gratis, 60 req/min
-  ALPHA_VANTAGE_KEY: 'DIN_NYCKEL_HÄR',  // alphavantage.co      → gratis, 25 req/dag
+  FINNHUB_KEY: 'd76o9h9r01qtg3nec6tgd76o9h9r01qtg3nec6u0',        // finnhub.io/register  → gratis, 60 req/min
+  ALPHA_VANTAGE_KEY: 'V48V807XJY2RWMMA',  // alphavantage.co      → gratis, 25 req/dag
   // Open-Meteo kräver ingen nyckel ─ fungerar utan konfiguration
 
   // ── WEBSOCKET — realtids-tick via Finnhub ───────────────────
